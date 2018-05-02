@@ -1,5 +1,4 @@
-#This is the with boarder version.
-from memory_profiler import profile
+#from memory_profiler import profile
 from mpi4py import MPI
 import numpy
 import matplotlib
@@ -8,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from tqdm import tqdm
 fig = plt.figure()
-prob = 0.7 ##0.2, 0.4, 0.5, 0.75, & 0.9
+prob = 0.7
 COLS = 400
 ROWS = 210
 generations = 200
@@ -17,6 +16,7 @@ comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 subROWS=ROWS / (size - 1)
+
 def cal_life(row_min, row_max, life_env_data):
   intermediateM = numpy.copy(life_env_data)
   for ROWelem in range(row_min,row_max):
@@ -68,38 +68,47 @@ if rank == 0:
   local_data = numpy.copy(M)
 
 for i in tqdm(range(generations)):
-  local_data = comm.bcast(local_data if rank == 0 else None, root=0)
+   #### Connecting boarders
+    if rank==0:
+    	local_data[0,:] = local_data[ROWS,:]
+    	local_data[ROWS+1,:] = local_data[1,:]
+    	local_data[:,0] = local_data[:,COLS-2]
+   	local_data[:,COLS-1] = local_data[:,1]
+    	local_data[0,0] = local_data[ROWS,COLS-2]
+    	local_data[ROWS+1,0] = local_data[1,COLS-2]
+    	local_data[0,COLS-1] = local_data[ROWS,1]
+    	local_data[ROWS+1,COLS-1] = local_data[1,1]
+  #### Connected
 
-  if rank == 0:
-    generation = generation + 1
-    combine_data = None
-  else:
-    combine_data = cal_life((rank-1)*subROWS+1,((rank)*subROWS) + 1,local_data)
+    local_data = comm.bcast(local_data if rank == 0 else None, root=0)
 
-  ret = comm.gather(combine_data,root=0)
+    if rank == 0:
+      generation = generation + 1
+      combine_data = None
+    else:
+      combine_data = cal_life((rank-1)*subROWS+1,((rank)*subROWS) + 1,local_data)
 
-  if rank == 0:
-    ret1=numpy.reshape(range(COLS),(1,COLS))
-    ret1[0:COLS] = 0
-    last_row = ret1[0:COLS]
-    for aaa in range(1, size):
-      ret1 = numpy.r_[ret1, ret[aaa]]
+    ret = comm.gather(combine_data,root=0)
 
-    ret1 = numpy.r_[ret1, last_row]
+    if rank == 0:
+      ret1=numpy.reshape(range(COLS),(1,COLS))
+      ret1[0:COLS] = 0
+      last_row = ret1[0:COLS]
+      for aaa in range(1, size):
+        ret1 = numpy.r_[ret1, ret[aaa]]
 
-    local_data = numpy.copy(ret1)
+      ret1 = numpy.r_[ret1, last_row]
 
-    im=plt.imshow(local_data, animated=True,interpolation='None')
-    ims.append([im])
-    if numpy.sum(local_data) == 0:
-      print("Extinction Occurs at generation = ",generation)
-      break
+      local_data = numpy.copy(ret1)
+
+      im=plt.imshow(local_data, animated=True,interpolation='None')
+      ims.append([im])
+      if numpy.sum(local_data) == 0:
+        print("Extinction Occurs at generation = ",generation)
+        break
 
 if rank == 0:
   print("Present Generation = %d" %(generation))
   ani = animation.ArtistAnimation(fig, ims, interval=25, blit=False,repeat_delay=500)
   ani.save('animate_life.mp4')
   plt.show()
-
-  ## mpirun -n 4 python animatelifempi.py
-  ## 4 can be replaced by 8 ro 16. Attention: 210%(number-1)==0.
