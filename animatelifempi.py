@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from tqdm import tqdm
 fig = plt.figure()
-prob = 0.7
+prob = 0.7 ###0.2, 0.4, 0.5, 0.75, & 0.9
 COLS = 400
 ROWS = 210
 generations = 200
@@ -102,3 +102,7 @@ if rank == 0:
   ani = animation.ArtistAnimation(fig, ims, interval=25, blit=False,repeat_delay=500)
   ani.save('animate_life.mp4')
   plt.show()
+
+  
+  
+  #### mpirun -n 16 python animatelifempi.py
