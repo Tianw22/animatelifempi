@@ -10,7 +10,7 @@ from tqdm import tqdm
 fig = plt.figure()
 prob = 0.7
 COLS = 400
-ROWS = 198
+ROWS = 210
 generations = 200
 
 comm = MPI.COMM_WORLD
