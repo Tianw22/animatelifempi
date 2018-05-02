@@ -1,4 +1,4 @@
-### The no boarder version
+### The with boarder version
 
 from mpi4py import MPI
 import numpy
