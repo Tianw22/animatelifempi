@@ -1,4 +1,5 @@
-#from memory_profiler import profile
+### The no boarder version
+
 from mpi4py import MPI
 import numpy
 import matplotlib
@@ -112,3 +113,7 @@ if rank == 0:
   ani = animation.ArtistAnimation(fig, ims, interval=25, blit=False,repeat_delay=500)
   ani.save('animate_life.mp4')
   plt.show()
+
+  
+  
+####### mpirun -n 4 python animatelifempi.py
